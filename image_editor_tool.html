@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelStudio - Advanced Image Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --primary-dark: #0099cc;
+            --secondary: #ff006e;
+            --accent: #ffd60a;
+            --dark-bg: #0a0e27;
+            --dark-surface: #16213e;
+            --dark-surface-alt: #1a2951;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8d4;
+            --border: #2d3a5c;
+            --success: #06ffa5;
+            --warning: #ff9500;
+            --error: #ff3333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ===== LAYOUT ===== */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 0;
+            background: var(--dark-bg);
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, var(--dark-surface) 0%, var(--dark-surface-alt) 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-left: 15px;
+            border-left: 1px solid var(--border);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: var(--dark-surface);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-profile:hover {
+            background: var(--dark-surface-alt);
+            transform: translateY(-2px);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+        }
+
+        @media (min-width: 1400px) {
+            .user-name {
+                display: block;
+            }
+        }
+
+        /* Sidebar Left */
+        .sidebar-left {
+            grid-row: 2;
+            grid-column: 1;
+            background: var(--dark-surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 20px;
+            animation: slideInLeft 0.5s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-item {
+            padding: 12px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            background: var(--dark-bg);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-item:hover {
+            background: var(--dark-surface-alt);
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark-surface-alt) 100%);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Main Editor Area */
+        .main-editor {
+            grid-row: 2;
+            grid-column: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            background: var(--dark-bg);
+            overflow: hidden;
+        }
+
+        .editor-toolbar {
+            background: var(--dark-surface);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+            padding-right: 10px;
+            border-right: 1px solid var(--border);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            background: var(--dark-surface-alt);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: var(--dark-bg);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.15);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-color: var(--primary);
+            color: var(--dark-bg);
+            font-weight: 600;
+        }
+
+        .btn.primary:hover {
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            width: 120px;
+            cursor: pointer;
+        }
+
+        input[type="color"] {
+            width: 40px;
+            height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .label-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: auto;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .canvas-container {
+            position: relative;
+            background: var(--dark-surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .canvas-placeholder {
+            width: 500px;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            gap: 20px;
+            text-align: center;
+        }
+
+        .canvas-placeholder-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--dark-surface);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+
+        /* Sidebar Right */
+        .sidebar-right {
+            grid-row: 2;
+            grid-column: 3;
+            background: var(--dark-surface);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 20px;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .filter-slider label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-slider input[type="range"] {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--dark-bg);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .filter-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+        }
+
+        .filter-slider input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+        }
+
+        .share-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .share-btn {
+            padding: 10px 8px;
+            border: 1px solid var(--border);
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .share-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .like-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--dark-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .like-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            background: var(--dark-surface-alt);
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .like-btn:hover {
+            border-color: var(--secondary);
+            color: var(--secondary);
+            transform: scale(1.05);
+        }
+
+        .like-btn.liked {
+            background: linear-gradient(135deg, var(--secondary) 0%, #ff3366 100%);
+            border-color: var(--secondary);
+            color: white;
+        }
+
+        .like-count {
+            font-size: 14px;
+            font-weight: 700;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: var(--dark-surface);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-footer button {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-footer .cancel-btn {
+            background: var(--dark-bg);
+            color: var(--text-primary);
+        }
+
+        .modal-footer .cancel-btn:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .modal-footer .confirm-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-color: var(--primary);
+            color: var(--dark-bg);
+        }
+
+        /* Analytics Dashboard */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+            background: var(--dark-surface-alt);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-change {
+            font-size: 11px;
+            color: var(--success);
+        }
+
+        /* Tabs */
+        .tab-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: var(--dark-bg);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-color: var(--primary);
+            color: var(--dark-bg);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr 280px;
+            }
+
+            .sidebar-left {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar-left,
+            .sidebar-right {
+                display: none;
+            }
+
+            .header {
+                padding: 0 15px;
+            }
+
+            .editor-toolbar {
+                padding: 10px 15px;
+            }
+
+            .canvas-placeholder {
+                width: 90vw;
+                height: 60vh;
+            }
+
+            .user-profile {
+                padding: 4px 8px;
+            }
+
+            .avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            background-color: var(--primary);
+            color: var(--dark-bg);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 12px 20px;
+            background: var(--success);
+            color: var(--dark-bg);
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 999;
+            animation: slideInNotification 0.3s ease;
+        }
+
+        @keyframes slideInNotification {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.fadeOut {
+            animation: fadeOut 0.3s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo">
+                ✨ PixelStudio
+            </div>
+            <div style="flex: 1;"></div>
+            <div class="header-actions">
+                <button class="btn" id="helpBtn" title="Help">? Help</button>
+            </div>
+            <div class="user-section">
+                <div class="user-profile" id="userProfile">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <span class="user-name" id="userName">User</span>
+                </div>
+                <button class="btn" id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar-left">
+            <div class="sidebar-section">
+                <div class="sidebar-title">📁 File</div>
+                <div class="sidebar-item active" id="newBtn">
+                    <span>➕</span> New
+                </div>
+                <div class="sidebar-item" id="openBtn">
+                    <span>📂</span> Open
+                </div>
+                <div class="sidebar-item" id="recentBtn">
+                    <span>🕐</span> Recent
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">✏️ Edit</div>
+                <div class="sidebar-item" id="undoBtn">
+                    <span>↶</span> Undo
+                </div>
+                <div class="sidebar-item" id="redoBtn">
+                    <span>↷</span> Redo
+                </div>
+                <div class="sidebar-item" id="resetBtn">
+                    <span>🔄</span> Reset
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">🎨 Tools</div>
+                <div class="sidebar-item" id="filterBtn">
+                    <span>🎯</span> Filters
+                </div>
+                <div class="sidebar-item" id="textBtn">
+                    <span>📝</span> Text
+                </div>
+                <div class="sidebar-item" id="cropBtn">
+                    <span>✂️</span> Crop
+                </div>
+                <div class="sidebar-item" id="resizeBtn">
+                    <span>📐</span> Resize
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">🔗 Sharing</div>
+                <div class="sidebar-item" id="shareBtn">
+                    <span>🌐</span> Share
+                </div>
+                <div class="sidebar-item" id="collaborateBtn">
+                    <span>👥</span> Collaborate
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN EDITOR -->
+        <main class="main-editor">
+            <!-- Toolbar -->
+            <div class="editor-toolbar">
+                <div class="toolbar-group">
+                    <input type="file" id="imageInput" accept="image/*">
+                    <button class="btn" id="uploadBtn">📤 Upload Image</button>
+                    <button class="btn primary" id="downloadBtn">💾 Download</button>
+                </div>
+
+                <div class="toolbar-group">
+                    <label class="label-text">Brightness</label>
+                    <input type="range" id="brightnessSlider" min="-100" max="100" value="0" style="width: 100px;">
+                </div>
+
+                <div class="toolbar-group">
+                    <label class="label-text">Contrast</label>
+                    <input type="range" id="contrastSlider" min="-100" max="100" value="0" style="width: 100px;">
+                </div>
+
+                <div class="toolbar-group">
+                    <label class="label-text">Color</label>
+                    <input type="color" id="colorPicker" value="#ffffff">
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="btn" id="grayscaleBtn">⚫ B&W</button>
+                    <button class="btn" id="sepiaBtn">🟤 Sepia</button>
+                    <button class="btn" id="invertBtn">🔄 Invert</button>
+                </div>
+            </div>
+
+            <!-- Canvas Area -->
+            <div class="canvas-area">
+                <div class="canvas-container" id="canvasContainer">
+                    <div class="canvas-placeholder">
+                        <div class="canvas-placeholder-icon">🖼️</div>
+                        <div>Click "Upload Image" to get started</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Supports JPG, PNG, GIF, WebP</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="sidebar-right">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('filters')">Filters</button>
+                <button class="tab-btn" onclick="switchTab('sharing')">Sharing</button>
+                <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
+            </div>
+
+            <!-- FILTERS TAB -->
+            <div id="filters-tab" class="tab-content active">
+                <div class="panel-section">
+                    <div class="panel-title">⚙️ Filters</div>
+                    <div class="filter-slider">
+                        <label>Saturation <span id="saturationValue">0</span>%</label>
+                        <input type="range" id="saturationSlider" min="-100" max="100" value="0">
+                    </div>
+                    <div class="filter-slider">
+                        <label>Hue <span id="hueValue">0</span>°</label>
+                        <input type="range" id="hueSlider" min="0" max="360" value="0">
+                    </div>
+                    <div class="filter-slider">
+                        <label>Blur <span id="blurValue">0</span>px</label>
+                        <input type="range" id="blurSlider" min="0" max="20" value="0">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">🎭 Presets</div>
+                    <button class="btn" style="width: 100%;" id="preset-cool">❄️ Cool</button>
+                    <button class="btn" style="width: 100%; margin-top: 8px;" id="preset-warm">🔥 Warm</button>
+                    <button class="btn" style="width: 100%; margin-top: 8px;" id="preset-vivid">✨ Vivid</button>
+                </div>
+            </div>
+
+            <!-- SHARING TAB -->
+            <div id="sharing-tab" class="tab-content">
+                <div class="panel-section">
+                    <div class="panel-title">📤 Share</div>
+                    <div class="share-buttons">
+                        <button class="share-btn" id="shareTwitter">𝕏 Tweet</button>
+                        <button class="share-btn" id="shareFacebook">f Facebook</button>
+                        <button class="share-btn" id="shareLinkedin">in LinkedIn</button>
+                        <button class="share-btn" id="shareInstagram">📷 Insta</button>
+                        <button class="share-btn" id="copyLink">🔗 Copy Link</button>
+                        <button class="share-btn" id="shareEmail">✉️ Email</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">❤️ Engagement</div>
+                    <div class="like-section">
+                        <button class="like-btn" id="likeBtn">
+                            <span id="likeIcon">🤍</span>
+                            <span id="likeText">Like</span>
+                        </button>
+                        <div class="like-count" id="likeCount">0</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">👥 Permissions</div>
+                    <select style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--dark-bg); color: var(--text-primary);">
+                        <option>🔒 Private</option>
+                        <option>🔓 Public</option>
+                        <option>👥 Friends Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ANALYTICS TAB -->
+            <div id="analytics-tab" class="tab-content">
+                <div class="panel-section">
+                    <div class="panel-title">📊 Analytics</div>
+                    <div class="analytics-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Views</div>
+                            <div class="stat-value" id="viewCount">0</div>
+                            <div class="stat-change">↑ 0 today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Likes</div>
+                            <div class="stat-value" id="likeStatCount">0</div>
+                            <div class="stat-change">↑ 0 today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Shares</div>
+                            <div class="stat-value" id="shareCount">0</div>
+                            <div class="stat-change">↑ 0 today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Downloads</div>
+                            <div class="stat-value" id="downloadCount">0</div>
+                            <div class="stat-change">↑ 0 today</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">🌍 Traffic</div>
+                    <div class="analytics-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Direct</div>
+                            <div class="stat-value">35%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Social</div>
+                            <div class="stat-value">48%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Search</div>
+                            <div class="stat-value">17%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal active">
+        <div class="modal-content">
+            <div class="modal-header">Login to PixelStudio</div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="rememberMe">
+                        Remember me
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="confirm-btn" id="loginBtn" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-color: var(--primary); color: var(--dark-bg); font-weight: 600;">Login</button>
+            </div>
+            <div style="text-align: center; margin-top: 15px; font-size: 12px; color: var(--text-secondary);">
+                Don't have an account? <a href="#" id="signupLink" style="color: var(--primary); text-decoration: none; font-weight: 600;">Sign up free</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIGNUP MODAL -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Create Your Account</div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="signupConfirm" placeholder="••••••••">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" id="backToLoginBtn">Back</button>
+                <button class="confirm-btn" id="signupBtn" style="background: linear-gradient(135deg, var(--success) 0%, #00d466 100%); border-color: var(--success); color: var(--dark-bg); font-weight: 600;">Sign Up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARE MODAL -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Share Your Work</div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label>Share URL</label>
+                    <input type="text" id="shareUrl" readonly value="https://pixelstudio.app/share/xyz123">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="shareDescription" placeholder="Add a description...">
+                </div>
+                <div class="form-group">
+                    <label>Allow Comments</label>
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="allowComments" checked>
+                        Yes
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" onclick="closeModal('shareModal')">Cancel</button>
+                <button class="confirm-btn" id="confirmShareBtn" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-color: var(--primary); color: var(--dark-bg); font-weight: 600;">Share</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOWNLOAD MODAL -->
+    <div id="downloadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Download Your Image</div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label>File Name</label>
+                    <input type="text" id="downloadName" placeholder="my-image" value="pixelstudio-edit">
+                </div>
+                <div class="form-group">
+                    <label>Format</label>
+                    <select id="downloadFormat">
+                        <option value="png">PNG (Lossless)</option>
+                        <option value="jpg">JPEG (Compressed)</option>
+                        <option value="webp">WebP (Modern)</option>
+                        <option value="gif">GIF (Animated)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quality</label>
+                    <input type="range" id="downloadQuality" min="1" max="100" value="95" style="width: 100%;">
+                    <div style="text-align: right; font-size: 12px; color: var(--text-secondary);" id="qualityValue">95%</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" onclick="closeModal('downloadModal')">Cancel</button>
+                <button class="confirm-btn" id="confirmDownloadBtn" style="background: linear-gradient(135deg, var(--accent) 0%, #ffb700 100%); border-color: var(--accent); color: var(--dark-bg); font-weight: 600;">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE MANAGEMENT =====
+        let appState = {
+            user: null,
+            currentImage: null,
+            canvas: null,
+            ctx: null,
+            originalImage: null,
+            filters: {
+                brightness: 0,
+                contrast: 0,
+                saturation: 0,
+                hue: 0,
+                blur: 0,
+                grayscale: 0,
+                sepia: 0,
+                invert: 0
+            },
+            analytics: {
+                views: Math.floor(Math.random() * 500),
+                likes: Math.floor(Math.random() * 100),
+                shares: Math.floor(Math.random() * 50),
+                downloads: Math.floor(Math.random() * 30)
+            },
+            isLiked: false
+        };
+
+        // ===== INITIALIZATION =====
+        function initApp() {
+            setupCanvasListener();
+            setupEventListeners();
+            setupFilterListeners();
+            updateUserDisplay();
+            addRandomAnalytics();
+        }
+
+        function setupCanvasListener() {
+            const container = document.getElementById('canvasContainer');
+            if (appState.canvas) {
+                appState.canvas.remove();
+            }
+            appState.canvas = document.createElement('canvas');
+            appState.ctx = appState.canvas.getContext('2d', { willReadFrequently: true });
+            container.innerHTML = '';
+            container.appendChild(appState.canvas);
+        }
+
+        function setupEventListeners() {
+            // Upload
+            document.getElementById('uploadBtn').addEventListener('click', () => {
+                document.getElementById('imageInput').click();
+            });
+            document.getElementById('imageInput').addEventListener('change', handleImageUpload);
+
+            // Download
+            document.getElementById('downloadBtn').addEventListener('click', () => {
+                openModal('downloadModal');
+            });
+            document.getElementById('confirmDownloadBtn').addEventListener('click', downloadImage);
+            document.getElementById('downloadQuality').addEventListener('input', (e) => {
+                document.getElementById('qualityValue').textContent = e.target.value + '%';
+            });
+
+            // Toolbar buttons
+            document.getElementById('grayscaleBtn').addEventListener('click', () => toggleFilter('grayscale'));
+            document.getElementById('sepiaBtn').addEventListener('click', () => toggleFilter('sepia'));
+            document.getElementById('invertBtn').addEventListener('click', () => toggleFilter('invert'));
+
+            // Sidebar left
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('redoBtn').addEventListener('click', redo);
+            document.getElementById('resetBtn').addEventListener('click', resetImage);
+            document.getElementById('filterBtn').addEventListener('click', () => switchTab('filters'));
+            document.getElementById('shareBtn').addEventListener('click', () => openModal('shareModal'));
+            document.getElementById('downloadBtn').addEventListener('click', () => openModal('downloadModal'));
+
+            // User
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('userProfile').addEventListener('click', openUserMenu);
+
+            // Auth
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('signupBtn').addEventListener('click', signup);
+            document.getElementById('signupLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                closeModal('loginModal');
+                openModal('signupModal');
+            });
+            document.getElementById('backToLoginBtn').addEventListener('click', () => {
+                closeModal('signupModal');
+                openModal('loginModal');
+            });
+
+            // Share
+            document.getElementById('confirmShareBtn').addEventListener('click', shareWork);
+            document.getElementById('shareTwitter').addEventListener('click', () => share('twitter'));
+            document.getElementById('shareFacebook').addEventListener('click', () => share('facebook'));
+            document.getElementById('shareLinkedin').addEventListener('click', () => share('linkedin'));
+            document.getElementById('shareInstagram').addEventListener('click', () => share('instagram'));
+            document.getElementById('copyLink').addEventListener('click', copyLink);
+            document.getElementById('shareEmail').addEventListener('click', () => share('email'));
+
+            // Like
+            document.getElementById('likeBtn').addEventListener('click', toggleLike);
+
+            // Help
+            document.getElementById('helpBtn').addEventListener('click', showHelp);
+
+            // Presets
+            document.getElementById('preset-cool').addEventListener('click', () => applyPreset('cool'));
+            document.getElementById('preset-warm').addEventListener('click', () => applyPreset('warm'));
+            document.getElementById('preset-vivid').addEventListener('click', () => applyPreset('vivid'));
+        }
+
+        function setupFilterListeners() {
+            document.getElementById('brightnessSlider').addEventListener('input', (e) => {
+                appState.filters.brightness = parseInt(e.target.value);
+                applyFilters();
+            });
+
+            document.getElementById('contrastSlider').addEventListener('input', (e) => {
+                appState.filters.contrast = parseInt(e.target.value);
+                applyFilters();
+            });
+
+            document.getElementById('saturationSlider').addEventListener('input', (e) => {
+                appState.filters.saturation = parseInt(e.target.value);
+                document.getElementById('saturationValue').textContent = e.target.value;
+                applyFilters();
+            });
+
+            document.getElementById('hueSlider').addEventListener('input', (e) => {
+                appState.filters.hue = parseInt(e.target.value);
+                document.getElementById('hueValue').textContent = e.target.value;
+                applyFilters();
+            });
+
+            document.getElementById('blurSlider').addEventListener('input', (e) => {
+                appState.filters.blur = parseInt(e.target.value);
+                document.getElementById('blurValue').textContent = e.target.value;
+                applyFilters();
+            });
+        }
+
+        // ===== IMAGE HANDLING =====
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    appState.originalImage = img;
+                    appState.currentImage = img;
+                    resizeCanvasToImage();
+                    applyFilters();
+                    showNotification('Image uploaded successfully!');
+                    incrementAnalytics('uploads');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resizeCanvasToImage() {
+            const maxWidth = document.querySelector('.canvas-area').clientWidth - 40;
+            const maxHeight = document.querySelector('.canvas-area').clientHeight - 40;
+            const imgAspect = appState.currentImage.width / appState.currentImage.height;
+            let canvasWidth = appState.currentImage.width;
+            let canvasHeight = appState.currentImage.height;
+
+            if (canvasWidth > maxWidth) {
+                canvasWidth = maxWidth;
+                canvasHeight = canvasWidth / imgAspect;
+            }
+            if (canvasHeight > maxHeight) {
+                canvasHeight = maxHeight;
+                canvasWidth = canvasHeight * imgAspect;
+            }
+
+            appState.canvas.width = canvasWidth;
+            appState.canvas.height = canvasHeight;
+        }
+
+        // ===== FILTER APPLICATION =====
+        function applyFilters() {
+            if (!appState.originalImage) return;
+
+            const { brightness, contrast, saturation, hue, blur, grayscale, sepia, invert } = appState.filters;
+
+            appState.ctx.clearRect(0, 0, appState.canvas.width, appState.canvas.height);
+            appState.ctx.filter = createFilterString(brightness, contrast, saturation, hue, blur, grayscale, sepia, invert);
+            appState.ctx.drawImage(appState.originalImage, 0, 0, appState.canvas.width, appState.canvas.height);
+            appState.ctx.filter = 'none';
+        }
+
+        function createFilterString(brightness, contrast, saturation, hue, blur, grayscale, sepia, invert) {
+            const filters = [
+                `brightness(${100 + brightness}%)`,
+                `contrast(${100 + contrast}%)`,
+                `saturate(${100 + saturation}%)`,
+                `hue-rotate(${hue}deg)`,
+                `blur(${blur}px)`,
+                `grayscale(${grayscale}%)`,
+                `sepia(${sepia}%)`,
+                `invert(${invert}%)`
+            ];
+            return filters.join(' ');
+        }
+
+        function toggleFilter(filterName) {
+            if (filterName === 'grayscale') {
+                appState.filters.grayscale = appState.filters.grayscale === 100 ? 0 : 100;
+            } else if (filterName === 'sepia') {
+                appState.filters.sepia = appState.filters.sepia === 100 ? 0 : 100;
+            } else if (filterName === 'invert') {
+                appState.filters.invert = appState.filters.invert === 100 ? 0 : 100;
+            }
+            applyFilters();
+        }
+
+        function applyPreset(preset) {
+            resetFilters();
+            switch(preset) {
+                case 'cool':
+                    appState.filters.brightness = -10;
+                    appState.filters.saturation = 20;
+                    appState.filters.hue = 180;
+                    break;
+                case 'warm':
+                    appState.filters.brightness = 15;
+                    appState.filters.saturation = 30;
+                    appState.filters.hue = 20;
+                    break;
+                case 'vivid':
+                    appState.filters.brightness = 5;
+                    appState.filters.contrast = 30;
+                    appState.filters.saturation = 50;
+                    break;
+            }
+            updateSliders();
+            applyFilters();
+            showNotification(`Applied ${preset} preset!`);
+        }
+
+        function resetFilters() {
+            appState.filters = {
+                brightness: 0,
+                contrast: 0,
+                saturation: 0,
+                hue: 0,
+                blur: 0,
+                grayscale: 0,
+                sepia: 0,
+                invert: 0
+            };
+            updateSliders();
+        }
+
+        function updateSliders() {
+            document.getElementById('brightnessSlider').value = appState.filters.brightness;
+            document.getElementById('contrastSlider').value = appState.filters.contrast;
+            document.getElementById('saturationSlider').value = appState.filters.saturation;
+            document.getElementById('saturationValue').textContent = appState.filters.saturation;
+            document.getElementById('hueSlider').value = appState.filters.hue;
+            document.getElementById('hueValue').textContent = appState.filters.hue;
+            document.getElementById('blurSlider').value = appState.filters.blur;
+            document.getElementById('blurValue').textContent = appState.filters.blur;
+        }
+
+        function resetImage() {
+            if (!appState.originalImage) return;
+            resetFilters();
+            applyFilters();
+            showNotification('Image reset to original!');
+        }
+
+        function undo() {
+            showNotification('Undo feature coming soon!');
+        }
+
+        function redo() {
+            showNotification('Redo feature coming soon!');
+        }
+
+        // ===== DOWNLOAD ===== 
+        function downloadImage() {
+            const name = document.getElementById('downloadName').value || 'pixelstudio-edit';
+            const format = document.getElementById('downloadFormat').value;
+            const quality = document.getElementById('downloadQuality').value / 100;
+
+            const link = document.createElement('a');
+            link.href = appState.canvas.toDataURL(`image/${format}`, quality);
+            link.download = `${name}.${format}`;
+            link.click();
+
+            showNotification(`Downloaded as ${format.toUpperCase()}!`);
+            closeModal('downloadModal');
+            incrementAnalytics('downloads');
+        }
+
+        // ===== USER MANAGEMENT =====
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const name = email.split('@')[0];
+            appState.user = { email, name, avatar: name[0].toUpperCase() };
+            closeModal('loginModal');
+            updateUserDisplay();
+            showNotification('Welcome back, ' + name + '!');
+        }
+
+        function signup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirm = document.getElementById('signupConfirm').value;
+
+            if (!name || !email || !password || !confirm) {
+                showNotification('Please fill all fields!');
+                return;
+            }
+            if (password !== confirm) {
+                showNotification('Passwords do not match!');
+                return;
+            }
+
+            appState.user = { email, name, avatar: name[0].toUpperCase() };
+            closeModal('signupModal');
+            updateUserDisplay();
+            showNotification('Account created! Welcome to PixelStudio!');
+        }
+
+        function logout() {
+            appState.user = null;
+            appState.currentImage = null;
+            appState.originalImage = null;
+            resetFilters();
+            setupCanvasListener();
+            updateUserDisplay();
+            openModal('loginModal');
+            showNotification('Logged out successfully!');
+        }
+
+        function updateUserDisplay() {
+            if (!appState.user) {
+                openModal('loginModal');
+                return;
+            }
+            document.getElementById('userName').textContent = appState.user.name;
+            document.getElementById('userAvatar').textContent = appState.user.avatar;
+        }
+
+        function openUserMenu() {
+            showNotification('User profile coming soon!');
+        }
+
+        // ===== SHARING =====
+        function shareWork() {
+            const description = document.getElementById('shareDescription').value;
+            showNotification('Image shared successfully!');
+            closeModal('shareModal');
+            incrementAnalytics('shares');
+        }
+
+        function share(platform) {
+            const urls = {
+                twitter: 'https://twitter.com/intent/tweet?text=Check%20out%20my%20edit%20on%20PixelStudio!&url=https://pixelstudio.app',
+                facebook: 'https://www.facebook.com/sharer/sharer.php?u=https://pixelstudio.app',
+                linkedin: 'https://www.linkedin.com/sharing/share-offsite/?url=https://pixelstudio.app',
+                instagram: 'https://instagram.com',
+                email: 'mailto:?subject=Check%20out%20my%20PixelStudio%20creation&body=I%20created%20something%20awesome!'
+            };
+            if (platform === 'email') {
+                window.location.href = urls[platform];
+            } else if (platform === 'instagram') {
+                showNotification('Open Instagram and share your screenshot!');
+            } else {
+                window.open(urls[platform], '_blank', 'width=600,height=400');
+            }
+            incrementAnalytics('shares');
+        }
+
+        function copyLink() {
+            const url = 'https://pixelstudio.app/share/xyz123';
+            navigator.clipboard.writeText(url);
+            showNotification('Link copied to clipboard!');
+        }
+
+        // ===== LIKES =====
+        function toggleLike() {
+            appState.isLiked = !appState.isLiked;
+            const btn = document.getElementById('likeBtn');
+            const icon = document.getElementById('likeIcon');
+            const text = document.getElementById('likeText');
+
+            if (appState.isLiked) {
+                btn.classList.add('liked');
+                icon.textContent = '❤️';
+                text.textContent = 'Liked';
+                appState.analytics.likes++;
+            } else {
+                btn.classList.remove('liked');
+                icon.textContent = '🤍';
+                text.textContent = 'Like';
+                appState.analytics.likes--;
+            }
+
+            updateAnalyticsDisplay();
+        }
+
+        // ===== ANALYTICS =====
+        function incrementAnalytics(event) {
+            switch(event) {
+                case 'uploads':
+                    appState.analytics.views += Math.floor(Math.random() * 10) + 1;
+                    break;
+                case 'shares':
+                    appState.analytics.shares += Math.floor(Math.random() * 5) + 1;
+                    break;
+                case 'downloads':
+                    appState.analytics.downloads += 1;
+                    break;
+            }
+            updateAnalyticsDisplay();
+        }
+
+        function addRandomAnalytics() {
+            setInterval(() => {
+                appState.analytics.views += Math.floor(Math.random() * 3);
+                updateAnalyticsDisplay();
+            }, 5000);
+        }
+
+        function updateAnalyticsDisplay() {
+            document.getElementById('viewCount').textContent = appState.analytics.views;
+            document.getElementById('likeStatCount').textContent = appState.analytics.likes;
+            document.getElementById('shareCount').textContent = appState.analytics.shares;
+            document.getElementById('downloadCount').textContent = appState.analytics.downloads;
+            document.getElementById('likeCount').textContent = appState.analytics.likes;
+        }
+
+        // ===== MODAL MANAGEMENT =====
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // ===== UI HELPERS =====
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('fadeOut');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function showHelp() {
+            showNotification('📚 Shortcuts: Upload image → Adjust filters → Download!');
+        }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
